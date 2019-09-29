@@ -30,6 +30,11 @@ public struct ALAppearance { // The structure used to display the controller
   public var image: UIImage?
   public var color: UIColor?
   public var isSensorsEnabled: Bool?
+    
+  public var createTitle: String?
+  public var confirmPwTitle: String?
+  public var confirmPcTitle: String?
+    
   public init() {}
 }
 
@@ -43,13 +48,17 @@ public enum ALMode { // Modes for AppLocker
 public class AppLocker: UIViewController {
   
   // MARK: - Top view
-  @IBOutlet weak var photoImageView: UIImageView!
   @IBOutlet weak var messageLabel: UILabel!
   @IBOutlet weak var submessageLabel: UILabel!
   @IBOutlet var pinIndicators: [Indicator]!
-  @IBOutlet weak var cancelButton: Button!
-
-  static let valet = Valet.valet(with: Identifier(nonEmpty: "Druidia")!, accessibility: .whenUnlockedThisDeviceOnly)  
+    
+  @IBOutlet public weak var cancelButton: UIButton!
+  @IBOutlet public weak var photoImageView: UIImageView!
+  @IBOutlet public weak var deleteButton: UIButton!
+    
+  public var appearance: ALAppearance?
+    
+  public static let valet = Valet.valet(with: Identifier(nonEmpty: "Druidia")!, accessibility: .whenUnlockedThisDeviceOnly)  
   // MARK: - Pincode
   private let context = LAContext()
   private var pin = "" // Entered pincode
@@ -70,13 +79,17 @@ public class AppLocker: UIViewController {
       let mode = self.mode ?? .validate
       switch mode {
       case .create:
-        submessageLabel.text = "Create your passcode" // Your submessage for create mode
+        submessageLabel.text = appearance?.createTitle
+      //"Create your passcode" // Your submessage for create mode
       case .change:
-        submessageLabel.text = "Enter your passcode" // Your submessage for change mode
+        submessageLabel.text = appearance?.confirmPwTitle
+      //"Enter your passcode" // Your submessage for change mode
       case .deactive:
-        submessageLabel.text = "Enter your passcode" // Your submessage for deactive mode
+        submessageLabel.text = appearance?.confirmPwTitle
+      //"Enter your passcode" // Your submessage for deactive mode
       case .validate:
-        submessageLabel.text = "Enter your passcode" // Your submessage for validate mode
+        submessageLabel.text = appearance?.confirmPwTitle
+        //"Enter your passcode" // Your submessage for validate mode
         cancelButton.isHidden = true
         isFirstCreationStep = false
       }
@@ -124,7 +137,8 @@ public class AppLocker: UIViewController {
       isFirstCreationStep = false
       reservedPin = pin
       clearView()
-      submessageLabel.text = "Confirm your pincode"
+      submessageLabel.text = appearance?.confirmPcTitle
+        //"Confirm your pincode"
     } else {
       confirmPin()
     }
@@ -223,12 +237,13 @@ extension AppLocker: CAAnimationDelegate {
 // MARK: - Present
 public extension AppLocker {
   // Present AppLocker
-  class func present(with mode: ALMode, and config: ALAppearance? = nil) {
-    guard let root = UIApplication.shared.keyWindow?.rootViewController,
+    class func present(with mode: ALMode, and config: ALAppearance? = nil, controller: UIViewController? = nil) {
+    guard let root = controller ?? UIApplication.shared.keyWindow?.rootViewController,
 
       let locker = Bundle(for: self.classForCoder()).loadNibNamed(ALConstants.nibName, owner: self, options: nil)?.first as? AppLocker else {
         return
     }
+    locker.appearance = config
     locker.messageLabel.text = config?.title ?? ""
     locker.submessageLabel.text = config?.subtitle ?? ""
     locker.view.backgroundColor = config?.color ?? .black
@@ -243,7 +258,7 @@ public extension AppLocker {
     } else {
       locker.photoImageView.isHidden = true
     }
-    
+    locker.modalPresentationStyle = root.modalPresentationStyle
     root.present(locker, animated: true, completion: nil)
   }
 }
