@@ -207,7 +207,13 @@ public class AppLocker: UIViewController {
     // The user is able to use his/her Touch ID / Face ID 👍
     context.evaluatePolicy(policy, localizedReason: ALConstants.kLocalizedReason, reply: {  success, error in
       if success {
-        self.dismiss(animated: true, completion: nil)
+        if (Thread.isMainThread) {
+            self.dismiss(animated: true, completion: nil)
+        } else {
+            DispatchQueue.main.sync {
+                self.dismiss(animated: true, completion: nil)
+            }
+        }
       }
     })
   }
